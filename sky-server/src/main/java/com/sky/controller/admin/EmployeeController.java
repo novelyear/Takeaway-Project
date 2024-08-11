@@ -110,7 +110,7 @@ public class EmployeeController {
      * @return
      */
     @PostMapping("/status/{status}")
-    public Result<String> enable(@PathVariable Boolean status, @RequestParam String id) {
+    public Result<String> enable(@PathVariable Integer status, Long id) {
         employeeService.enable(status, id);
         return Result.success();
     }
@@ -133,9 +133,9 @@ public class EmployeeController {
     *
     */
     @PutMapping
-    public Result updateEmployee(@RequestBody Employee employee) {
-        log.info("updateEmployee: {}", employee);
-        employeeService.update(employee);
+    public Result updateEmployee(@RequestBody EmployeeDTO employeeDTO) {
+        log.info("updateEmployee: {}", employeeDTO);
+        employeeService.update(employeeDTO);
         return Result.success();
     }
 }

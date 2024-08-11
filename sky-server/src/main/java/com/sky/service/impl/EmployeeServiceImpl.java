@@ -38,8 +38,11 @@ public class EmployeeServiceImpl implements EmployeeService {
      *
      */
     @Override
-    public void enable(Boolean status, String id) {
-        employeeMapper.enable(status, Integer.valueOf(id));
+    public void enable(Integer status, Long id) {
+        Employee employee = new Employee();
+        employee.setStatus(status);
+        employee.setId(id);
+        employeeMapper.update(employee);
     }
 
     /**
@@ -98,7 +101,9 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public Employee getById(Long id) {
-        return employeeMapper.getById(id);
+        Employee employee = employeeMapper.getById(id);
+        employee.setPassword("*****");
+        return employee;
     }
 
     @Override
@@ -122,13 +127,14 @@ public class EmployeeServiceImpl implements EmployeeService {
             //账号被锁定
             throw new AccountLockedException(MessageConstant.ACCOUNT_LOCKED);
         }
-
-        employeeMapper.editPassword(id, newPassword);
+        employee.setPassword(newPassword);
+        employeeMapper.update(employee);
     }
 
     @Override
-    public void update(Employee employee) {
-        Employee toUpdate = employeeMapper.getById(employee.getId());
+    public void update(EmployeeDTO employeeDTO) {
+        Employee toUpdate = new Employee();
+        BeanUtils.copyProperties(employeeDTO, toUpdate);
         if (toUpdate == null) {
             throw new AccountNotFoundException(MessageConstant.ACCOUNT_NOT_FOUND);
         }
@@ -136,6 +142,8 @@ public class EmployeeServiceImpl implements EmployeeService {
             //账号被锁定
             throw new AccountLockedException(MessageConstant.ACCOUNT_LOCKED);
         }
-        employeeMapper.update(employee);
+        toUpdate.setUpdateTime(LocalDateTime.now());
+        toUpdate.setUpdateUser(BaseContext.getCurrentId());
+        employeeMapper.update(toUpdate);
     }
 }

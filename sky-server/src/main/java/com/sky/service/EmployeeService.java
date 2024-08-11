@@ -21,9 +21,9 @@ public interface EmployeeService {
 
     Employee getById(Long id);
 
-    void enable(Boolean status, String id);
+    void enable(Integer status, Long id);
 
     void editPassword(Long id, String newPassword, String oldPassword);
 
-    void update(Employee employee);
+    void update(EmployeeDTO employeeDTO);
 }
