@@ -3,6 +3,6 @@ sky:
     driver-class-name: com.mysql.cj.jdbc.Driver
     host: localhost
     port: 3306
-    database: sky_take_out
+    database: my_take_away
     username: root
-    password: root
+    password: QWe3230938

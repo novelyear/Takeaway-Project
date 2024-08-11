@@ -4,16 +4,14 @@ import com.sky.constant.JwtClaimsConstant;
 import com.sky.dto.EmployeeLoginDTO;
 import com.sky.entity.Employee;
 import com.sky.properties.JwtProperties;
+import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.EmployeeService;
 import com.sky.utils.JwtUtil;
 import com.sky.vo.EmployeeLoginVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,7 +31,6 @@ public class EmployeeController {
 
     /**
      * 登录
-     *
      * @param employeeLoginDTO
      * @return
      */
@@ -70,5 +67,74 @@ public class EmployeeController {
     public Result<String> logout() {
         return Result.success();
     }
+    /*
+    * 新增员工
+    *
+    * @param Employee
+    * */
+    @PostMapping()
+    public Result<String> insert(@RequestBody Employee employee) {
+        log.info("inserted employee: {}", employee);
 
+        employeeService.insert(employee);
+        return Result.success();
+    }
+    /*
+    * 分页查询员工
+    *
+    * @return PageResult
+    * */
+    @PostMapping("/page")
+    public Result<PageResult> list(@RequestParam(defaultValue = "1") Integer page,
+                                   @RequestParam(defaultValue = "10") Integer pageSize) {
+        PageResult pageResult = employeeService.list(page, pageSize);
+        return Result.success(pageResult);
+    }
+    /**
+    *根据id查询员工
+    * @param id
+     * @return Result<Employee>
+    */
+    @GetMapping("/{id}")
+    public Result<Employee> getById(@PathVariable Long id) {
+        log.info("getById: {}", id);
+        Employee employee = employeeService.getById(id);
+        return Result.success(employee);
+    }
+
+    /**
+     * 启用、禁用员工
+     * @param id
+     * @param status
+     * @return
+     */
+    @PostMapping("/status/{status}")
+    public Result<String> enable(@PathVariable Boolean status, @RequestParam String id) {
+        employeeService.enable(status, id);
+        return Result.success();
+    }
+    /**
+    *修改员工密码
+     * @param id
+     * @param newPassword
+     * @param oldPassword
+    */
+    @PutMapping("/editPassword")
+    public Result editPassword(@RequestBody Long id,
+                               @RequestParam String newPassword,
+                               @RequestParam String oldPassword) {
+        log.info("employee{}'s password updated", id);
+        employeeService.editPassword(id, newPassword, oldPassword);
+        return Result.success();
+    }
+    /**
+    *修改员工信息
+    *
+    */
+    @PutMapping
+    public Result updateEmployee(@RequestBody Employee employee) {
+        log.info("updateEmployee: {}", employee);
+        employeeService.update(employee);
+        return Result.success();
+    }
 }
