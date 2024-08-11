@@ -1,12 +1,12 @@
 package com.sky.mapper;
 
+import com.github.pagehelper.Page;
+import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.entity.Employee;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
-
-import java.util.List;
 
 @Mapper
 public interface EmployeeMapper {
@@ -25,8 +25,8 @@ public interface EmployeeMapper {
     void insert(Employee employee);
     @Select("select count(*) from my_take_away.employee;")
     Integer count();
-    @Select("select * from employee limit #{start}, #{pageSize};")
-    List<Employee> list(Integer start, Integer pageSize);
+
+    Page<Employee> pageQuery(EmployeePageQueryDTO employeePageQueryDTO);
     @Update("update employee set status = #{status} where id = #{id};")
     void enable(Boolean status, Integer id);
     @Update("update employee set password = #{newPassword} where id = #{id};")
