@@ -3,6 +3,8 @@ package com.sky.service.impl;
 import com.sky.constant.MessageConstant;
 import com.sky.constant.PasswordConstant;
 import com.sky.constant.StatusConstant;
+import com.sky.context.BaseContext;
+import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
 import com.sky.entity.Employee;
 import com.sky.exception.AccountLockedException;
@@ -11,8 +13,11 @@ import com.sky.exception.PasswordErrorException;
 import com.sky.mapper.EmployeeMapper;
 import com.sky.result.PageResult;
 import com.sky.service.EmployeeService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController;
 import org.springframework.stereotype.Service;
+import org.springframework.util.DigestUtils;
 
 import java.time.LocalDateTime;
 
@@ -21,6 +26,9 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Autowired
     private EmployeeMapper employeeMapper;
+    @Autowired
+    private BasicErrorController basicErrorController;
+
     /**
      * 启用、禁用员工
      * @param status id
@@ -52,7 +60,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
 
         //密码比对
-//        password = DigestUtils.md5DigestAsHex(password.getBytes());
+        password = DigestUtils.md5DigestAsHex(password.getBytes());
         if (!password.equals(employee.getPassword())) {
             //密码错误
             throw new PasswordErrorException(MessageConstant.PASSWORD_ERROR);
@@ -67,10 +75,14 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public void insert(Employee employee) {
+    public void insert(EmployeeDTO employeeDTO) {
+        Employee employee = new Employee();
+        BeanUtils.copyProperties(employeeDTO, employee);
         employee.setCreateTime(LocalDateTime.now());
         employee.setUpdateTime(LocalDateTime.now());
         if(employee.getPassword() == null) employee.setPassword(PasswordConstant.DEFAULT_PASSWORD);
+        employee.setCreateUser(BaseContext.getCurrentId());
+        employee.setUpdateUser(BaseContext.getCurrentId());
         employeeMapper.insert(employee);
     }
 
@@ -99,7 +111,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
 
         //密码比对
-//        oldPassword = DigestUtils.md5DigestAsHex(oldPassword.getBytes());
+        oldPassword = DigestUtils.md5DigestAsHex(oldPassword.getBytes());
         if (!oldPassword.equals(employee.getPassword())) {
             //密码错误
             throw new PasswordErrorException(MessageConstant.PASSWORD_ERROR);
