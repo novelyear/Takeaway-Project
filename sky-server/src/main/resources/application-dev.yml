@@ -6,3 +6,7 @@ sky:
     database: my_take_away
     username: root
     password: QWe3230938
+  redis:
+    host: localhost
+    port: 6379
+    password: 3230938
