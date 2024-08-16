@@ -5,7 +5,6 @@ import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.constant.PasswordConstant;
 import com.sky.constant.StatusConstant;
-import com.sky.context.BaseContext;
 import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
 import com.sky.dto.EmployeePageQueryDTO;
@@ -21,8 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
-
-import java.time.LocalDateTime;
 
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
@@ -84,11 +81,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     public void insert(EmployeeDTO employeeDTO) {
         Employee employee = new Employee();
         BeanUtils.copyProperties(employeeDTO, employee);
-        employee.setCreateTime(LocalDateTime.now());
-        employee.setUpdateTime(LocalDateTime.now());
         if(employee.getPassword() == null) employee.setPassword(PasswordConstant.DEFAULT_PASSWORD);
-        employee.setCreateUser(BaseContext.getCurrentId());
-        employee.setUpdateUser(BaseContext.getCurrentId());
         employeeMapper.insert(employee);
     }
 
@@ -108,14 +101,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public void editPassword(Long id, String newPassword, String oldPassword) {
-        //1、根据id查询数据库中的数据
         Employee employee = employeeMapper.getById(id);
-        //2、处理各种异常情况（用户名不存在、密码不对、账号被锁定）
-        if (employee == null) {
-            //账号不存在
-            throw new AccountNotFoundException(MessageConstant.ACCOUNT_NOT_FOUND);
-        }
-
         //密码比对
         oldPassword = DigestUtils.md5DigestAsHex(oldPassword.getBytes());
         if (!oldPassword.equals(employee.getPassword())) {
@@ -142,8 +128,6 @@ public class EmployeeServiceImpl implements EmployeeService {
             //账号被锁定
             throw new AccountLockedException(MessageConstant.ACCOUNT_LOCKED);
         }
-        toUpdate.setUpdateTime(LocalDateTime.now());
-        toUpdate.setUpdateUser(BaseContext.getCurrentId());
         employeeMapper.update(toUpdate);
     }
 }
