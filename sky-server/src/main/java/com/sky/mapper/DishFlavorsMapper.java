@@ -9,4 +9,6 @@ import java.util.List;
 public interface DishFlavorsMapper {
 
     void insert(List<DishFlavor> flavors);
+
+    void delete(List<Long> ids);
 }
