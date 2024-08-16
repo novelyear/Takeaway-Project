@@ -5,9 +5,10 @@ import com.sky.annotation.AutoFill;
 import com.sky.dto.DishPageQueryDTO;
 import com.sky.entity.Dish;
 import com.sky.enumeration.OperationType;
-import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 @Mapper
 public interface DishMapper {
@@ -21,9 +22,10 @@ public interface DishMapper {
     Integer countByCategoryId(Long categoryId);
 
     Page<Dish> pageQuery(DishPageQueryDTO dishPageQueryDTO);
-    @Insert("insert into dish(name, category_id, price, image, description) " +
-            "VALUES " +
-            "(#{name}, #{categoryId}, #{price}, #{image}, #{description})")
     @AutoFill(value = OperationType.INSERT)
-    void insert(Dish dish);
+    Long insert(Dish dish);
+
+    void delete(List<Long> ids);
+
+    void update(Dish dish);
 }

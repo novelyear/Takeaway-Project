@@ -10,3 +10,8 @@ sky:
     host: localhost
     port: 6379
     password: 3230938
+  alioss:
+    endpoint: xxx
+    access-key-secret: xxx
+    access-key-id: xxxx
+    bucket-name: xxx
