@@ -26,4 +26,6 @@ public interface EmployeeService {
     void editPassword(Long id, String newPassword, String oldPassword);
 
     void update(EmployeeDTO employeeDTO);
+
+    void deleteById(Long id);
 }

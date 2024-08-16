@@ -83,7 +83,6 @@ public class EmployeeController {
     @ApiOperation("新增员工")
     public Result<String> insert(@RequestBody EmployeeDTO employeeDTO) {
         log.info("inserted employee: {}", employeeDTO);
-
         employeeService.insert(employeeDTO);
         return Result.success();
     }
@@ -147,6 +146,16 @@ public class EmployeeController {
     public Result updateEmployee(@RequestBody EmployeeDTO employeeDTO) {
         log.info("updateEmployee: {}", employeeDTO);
         employeeService.update(employeeDTO);
+        return Result.success();
+    }
+    /**
+     * 删除员工
+     */
+    @DeleteMapping
+    @ApiOperation("删除员工")
+    public Result deleteById(@RequestBody Long id) {
+        log.info("delete: {}", id);
+        employeeService.deleteById(id);
         return Result.success();
     }
 }

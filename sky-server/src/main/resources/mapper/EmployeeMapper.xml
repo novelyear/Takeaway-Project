@@ -12,6 +12,22 @@
         order by create_time desc
     </select>
 
+    <insert id="insert" parameterType="employee">
+        insert into my_take_away.employee
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                id,
+            </if>
+            id_number, name, password, phone, sex, username, create_time, update_time, create_user, update_user
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                #{id},
+            </if>
+            #{idNumber}, #{name}, #{password}, #{phone}, #{sex}, #{username}, #{createTime}, #{updateTime}, #{createUser}, #{updateUser}
+        </trim>
+    </insert>
+
     <update id="update" parameterType="employee">
         update employee
         <set>
@@ -22,8 +38,11 @@
             <if test="sex != null"> sex = #{sex},</if>
             <if test="idNumber != null"> id_number = #{idNumber},</if>
             <if test="status != null"> status = #{status},</if>
-            <if test="updateUser != null"> update_user = #{updateUser},</if>
+            update_time = #{updateTime}, update_user = #{updateUser}
         </set>
         where id = #{id}
     </update>
+    <delete id="deleteById">
+        delete from employee where id = #{id};
+    </delete>
 </mapper>

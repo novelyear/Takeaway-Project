@@ -15,19 +15,20 @@ import com.sky.exception.PasswordErrorException;
 import com.sky.mapper.EmployeeMapper;
 import com.sky.result.PageResult;
 import com.sky.service.EmployeeService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
+import java.time.LocalDateTime;
+
+@Slf4j
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
 
     @Autowired
     private EmployeeMapper employeeMapper;
-    @Autowired
-    private BasicErrorController basicErrorController;
 
     /**
      * 启用、禁用员工
@@ -82,6 +83,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = new Employee();
         BeanUtils.copyProperties(employeeDTO, employee);
         if(employee.getPassword() == null) employee.setPassword(PasswordConstant.DEFAULT_PASSWORD);
+        log.info("Entity HashCode after modification: {}", System.identityHashCode(employee));
+        employee.setCreateTime(LocalDateTime.now());
         employeeMapper.insert(employee);
     }
 
@@ -121,13 +124,15 @@ public class EmployeeServiceImpl implements EmployeeService {
     public void update(EmployeeDTO employeeDTO) {
         Employee toUpdate = new Employee();
         BeanUtils.copyProperties(employeeDTO, toUpdate);
-        if (toUpdate == null) {
-            throw new AccountNotFoundException(MessageConstant.ACCOUNT_NOT_FOUND);
-        }
         if (toUpdate.getStatus() == StatusConstant.DISABLE) {
             //账号被锁定
             throw new AccountLockedException(MessageConstant.ACCOUNT_LOCKED);
         }
         employeeMapper.update(toUpdate);
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        employeeMapper.deleteById(id);
     }
 }

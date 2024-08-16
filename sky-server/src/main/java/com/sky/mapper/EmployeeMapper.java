@@ -5,7 +5,6 @@ import com.sky.annotation.AutoFill;
 import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.entity.Employee;
 import com.sky.enumeration.OperationType;
-import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
@@ -21,14 +20,15 @@ public interface EmployeeMapper {
     Employee getByUsername(String username);
     @Select("select * from employee where id = #{id}")
     Employee getById(Long id);
-    @Insert("insert into my_take_away.employee (id_number, name, password, phone, sex, username, create_time, update_time) values (" +
-            "#{idNumber}, #{name}, #{password}, #{phone}, #{sex}, #{username}, #{createTime}, #{updateTime})")
+    @Select("select count(*) from employee")
+    Long getCount();
     @AutoFill(value = OperationType.INSERT)
     void insert(Employee employee);
-    @Select("select count(*) from my_take_away.employee;")
-    Integer count();
 
     Page<Employee> pageQuery(EmployeePageQueryDTO employeePageQueryDTO);
     @AutoFill(value = OperationType.UPDATE)
     void update(Employee employee);
+
+    void deleteById(Long id);
+
 }
