@@ -18,6 +18,7 @@ import com.sky.vo.DishVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -37,6 +38,8 @@ public class DishServiceImpl implements DishService {
     private DishFlavorsMapper dishFlavorsMapper;
     @Autowired
     private SetMealDishMapper setMealDishMapper;
+    @Autowired
+    private RedisTemplate redisTemplate;
 
 
     /**
@@ -134,9 +137,15 @@ public class DishServiceImpl implements DishService {
      */
     @Override
     public List<DishVO> listWithFlavor(Dish dish) {
+        //先查询redis
+        String key = "dish_" + dish.getCategoryId();
+        List<DishVO> dishVOList = (List<DishVO>) redisTemplate.opsForValue().get(key);
+        if(dishVOList != null && !dishVOList.isEmpty()) {
+            return dishVOList;
+        }
+        //redis missed，查找数据库
         List<Dish> dishList = dishMapper.list(dish);
-
-        List<DishVO> dishVOList = new ArrayList<>();
+        dishVOList = new ArrayList<>();
 
         for (Dish d : dishList) {
             DishVO dishVO = new DishVO();
@@ -148,7 +157,8 @@ public class DishServiceImpl implements DishService {
             dishVO.setFlavors(flavors);
             dishVOList.add(dishVO);
         }
-
+        //加入redis缓存
+        redisTemplate.opsForValue().set(key, dishVOList);
         return dishVOList;
     }
 }
