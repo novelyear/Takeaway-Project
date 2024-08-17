@@ -20,7 +20,10 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 菜品业务层
@@ -43,8 +46,10 @@ public class DishServiceImpl implements DishService {
      */
     @Override
     public PageResult pageQuery(DishPageQueryDTO dishPageQueryDTO) {
+        log.info("分页查询菜品");
         PageHelper.startPage(dishPageQueryDTO.getPage(), dishPageQueryDTO.getPageSize());
         Page<DishVO> page =  dishMapper.pageQuery(dishPageQueryDTO);
+        log.info("查询成功");
         return new PageResult(page.getTotal(), page.getResult());
     }
 
@@ -57,15 +62,10 @@ public class DishServiceImpl implements DishService {
         Dish dish = new Dish();
         BeanUtils.copyProperties(dishDTO, dish);
         dish.setStatus(StatusConstant.ENABLE);
-        String c = new String();
-        c.toLowerCase();
         Long dishId = dishMapper.insert(dish);
-
         List<DishFlavor> flavors = dishDTO.getFlavors();
-        if(flavors != null && flavors.size() > 0) {
-            flavors.forEach(dishFlavorsMappers -> {
-                dishFlavorsMappers.setDishId(dishId);
-            });
+        if(flavors != null && !flavors.isEmpty()) {
+            flavors.forEach(dishFlavorsMappers -> dishFlavorsMappers.setDishId(dishId));
             dishFlavorsMapper.insert(flavors);
         }
     }
@@ -79,26 +79,77 @@ public class DishServiceImpl implements DishService {
         //是否正在售卖
         for(Long id : ids) {
             Dish dish = dishMapper.getById(id);
-            if(dish.getStatus() == StatusConstant.ENABLE) {
+            if(Objects.equals(dish.getStatus(), StatusConstant.ENABLE)) {
                 throw new DeletionNotAllowedException(MessageConstant.DISH_ON_SALE);
             }
         }
         //是否被套餐关联
         List<Long> setmealIds = setMealDishMapper.getSetMealDishIdsByDishIds(ids);
-        if(setmealIds != null && setmealIds.size() > 0) {
+        if(setmealIds != null && !setmealIds.isEmpty()) {
             throw new DeletionNotAllowedException(MessageConstant.DISH_BE_RELATED_BY_SETMEAL);
         }
         dishMapper.delete(ids);
         dishFlavorsMapper.delete(ids);
     }
 
+    /**
+     * 修改菜品
+     * @param dishDTO
+     */
     @Override
     public void update(DishDTO dishDTO) {
         Dish dish = new Dish();
         BeanUtils.copyProperties(dishDTO, dish);
-
-        dish.setStatus(StatusConstant.ENABLE);
+        //修改菜品自身信息
         dishMapper.update(dish);
+        //修改菜品口味信息
+        //1. 根据菜品id删除该菜品对应口味信息
+        dishFlavorsMapper.delete(Collections.singletonList(dish.getId()));
+        //2. 插入新的口味信息
+        List<DishFlavor> flavors = dishDTO.getFlavors();
+        if(flavors != null && !flavors.isEmpty()) {
+            flavors.forEach(dishFlavorsMappers -> dishFlavorsMappers.setDishId(dish.getId()));
+            dishFlavorsMapper.insert(flavors);
+        }
+    }
+
+    /**
+     * 根据id查询菜品和对应的口味数据
+     * @param id
+     * @return
+     */
+    @Override
+    public DishVO getByIdWithFlavor(Long id) {
+        Dish dish = dishMapper.getById(id);
+        List<DishFlavor> dishFlavors = dishFlavorsMapper.getByDishId(id);
+        DishVO dishVO = new DishVO();
+        BeanUtils.copyProperties(dish, dishVO);
+        dishVO.setFlavors(dishFlavors);
+        return dishVO;
+    }
+    /**
+     * 条件查询菜品和口味
+     * @param dish
+     * @return
+     */
+    @Override
+    public List<DishVO> listWithFlavor(Dish dish) {
+        List<Dish> dishList = dishMapper.list(dish);
+
+        List<DishVO> dishVOList = new ArrayList<>();
+
+        for (Dish d : dishList) {
+            DishVO dishVO = new DishVO();
+            BeanUtils.copyProperties(d,dishVO);
+
+            //根据菜品id查询对应的口味
+            List<DishFlavor> flavors = dishFlavorsMapper.getByDishId(d.getId());
+
+            dishVO.setFlavors(flavors);
+            dishVOList.add(dishVO);
+        }
+
+        return dishVOList;
     }
 
     /**

@@ -14,4 +14,11 @@
             #{id}
         </foreach>
     </delete>
+
+    <update id="update" parameterType="list">
+        update dish_flavor set
+        <foreach collection="flavors" item="flavor" open="(" separator="," close=")">
+            name = #{flavor.name}, value = #{flavor.value} where dish_id = #{flavor.dishId}
+        </foreach>
+    </update>
 </mapper>

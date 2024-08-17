@@ -8,7 +8,7 @@
             <if test="name != null">
                 and d.name like concat('%',#{name},'%')
             </if>
-            <if test="category != null">
+            <if test="categoryId != null">
                 and d.category_id = #{categoryId}
             </if>
             <if test="status != null">
