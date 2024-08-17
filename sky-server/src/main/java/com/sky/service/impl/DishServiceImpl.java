@@ -20,6 +20,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -43,8 +44,10 @@ public class DishServiceImpl implements DishService {
      */
     @Override
     public PageResult pageQuery(DishPageQueryDTO dishPageQueryDTO) {
+        log.info("分页查询菜品");
         PageHelper.startPage(dishPageQueryDTO.getPage(), dishPageQueryDTO.getPageSize());
         Page<DishVO> page =  dishMapper.pageQuery(dishPageQueryDTO);
+        log.info("查询成功");
         return new PageResult(page.getTotal(), page.getResult());
     }
 
@@ -59,7 +62,7 @@ public class DishServiceImpl implements DishService {
         dish.setStatus(StatusConstant.ENABLE);
         Long dishId = dishMapper.insert(dish);
         List<DishFlavor> flavors = dishDTO.getFlavors();
-        if(flavors != null && flavors.size() > 0) {
+        if(flavors != null && !flavors.isEmpty()) {
             flavors.forEach(dishFlavorsMappers -> {
                 dishFlavorsMappers.setDishId(dishId);
             });
@@ -89,13 +92,27 @@ public class DishServiceImpl implements DishService {
         dishFlavorsMapper.delete(ids);
     }
 
+    /**
+     * 修改菜品
+     * @param dishDTO
+     */
     @Override
     public void update(DishDTO dishDTO) {
         Dish dish = new Dish();
         BeanUtils.copyProperties(dishDTO, dish);
-
-        dish.setStatus(StatusConstant.ENABLE);
+        //修改菜品自身信息
         dishMapper.update(dish);
+        //修改菜品口味信息
+        //1. 根据菜品id删除该菜品对应口味信息
+        dishFlavorsMapper.delete(Collections.singletonList(dish.getId()));
+        //2. 插入新的口味信息
+        List<DishFlavor> flavors = dishDTO.getFlavors();
+        if(flavors != null && !flavors.isEmpty()) {
+            flavors.forEach(dishFlavorsMappers -> {
+                dishFlavorsMappers.setDishId(dish.getId());
+            });
+            dishFlavorsMapper.insert(flavors);
+        }
     }
 
     /**

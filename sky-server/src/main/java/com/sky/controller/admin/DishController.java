@@ -25,7 +25,7 @@ public class DishController {
     /**
      * 菜品分页查询
      * @param dishPageQueryDTO
-     * @return
+     * @return PageResult
      */
     @ApiOperation("分页查询菜品")
     @GetMapping("/page")
@@ -36,7 +36,8 @@ public class DishController {
     }
     /**
      * 新增菜品
-     * @param
+     * @param dishDTO
+     * @return String
      */
     @ApiOperation("新增菜品")
     @PostMapping
@@ -49,7 +50,7 @@ public class DishController {
     /**
      * 批量删除菜品
      * @param ids
-     * @return
+     * @return string
      */
     @DeleteMapping
     @ApiOperation("批量删除菜品")
@@ -68,7 +69,7 @@ public class DishController {
     /**
      * 修改菜品
      * @param dishDTO
-     * @return
+     * @return string
      */
     @PutMapping
     @ApiOperation("修改菜品")

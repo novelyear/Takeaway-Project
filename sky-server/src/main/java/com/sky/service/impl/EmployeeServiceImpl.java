@@ -21,8 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
-import java.time.LocalDateTime;
-
 @Slf4j
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
@@ -84,7 +82,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         BeanUtils.copyProperties(employeeDTO, employee);
         if(employee.getPassword() == null) employee.setPassword(PasswordConstant.DEFAULT_PASSWORD);
         log.info("Entity HashCode after modification: {}", System.identityHashCode(employee));
-        employee.setCreateTime(LocalDateTime.now());
         employeeMapper.insert(employee);
     }
 
