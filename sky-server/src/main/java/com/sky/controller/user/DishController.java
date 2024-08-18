@@ -31,7 +31,6 @@ public class DishController {
      */
     @GetMapping("/list")
     @ApiOperation("根据分类id查询菜品")
-    @Cacheable(cacheNames = "dishCache", key = "categoryId")
     public Result<List<DishVO>> list(Long categoryId) {
         Dish dish = new Dish();
         dish.setCategoryId(categoryId);
