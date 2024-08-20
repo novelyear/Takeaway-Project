@@ -58,7 +58,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         }
         else {
             Integer number = exist.getNumber() + 1;
-            shoppingCart.setNumber(number);
+            exist.setNumber(number);
             shoppingCartMapper.update(exist);
         }
     }
@@ -78,5 +78,23 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     public void clean() {
         Long userId = BaseContext.getCurrentId();
         shoppingCartMapper.clean(userId);
+    }
+
+    @Override
+    public void delete(ShoppingCartDTO shoppingCartDTO) {
+        ShoppingCart shoppingCart = new ShoppingCart();
+        BeanUtils.copyProperties(shoppingCartDTO, shoppingCart);
+        shoppingCart.setUserId(BaseContext.getCurrentId());
+        ShoppingCart exist = shoppingCartMapper.query(shoppingCart);
+        if(exist != null) {
+            Integer number = exist.getNumber();
+            if(number == 1) {
+                shoppingCartMapper.delete(shoppingCart);
+            }
+            else {
+                exist.setNumber(number - 1);
+                shoppingCartMapper.update(exist);
+            }
+        }
     }
 }
