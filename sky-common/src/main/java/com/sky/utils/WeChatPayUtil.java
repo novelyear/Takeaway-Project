@@ -123,24 +123,24 @@ public class WeChatPayUtil {
     }
 
     /**
-     * jsapi下单
+     * jsapi下单，获取预支付交易单
      *
      * @param orderNum    商户订单号
      * @param total       总金额
      * @param description 商品描述
      * @param openid      微信用户的openid
-     * @return
      */
     private String jsapi(String orderNum, BigDecimal total, String description, String openid) throws Exception {
         JSONObject jsonObject = new JSONObject();
+        //加入配置信息
         jsonObject.put("appid", weChatProperties.getAppid());
         jsonObject.put("mchid", weChatProperties.getMchid());
         jsonObject.put("description", description);
         jsonObject.put("out_trade_no", orderNum);
         jsonObject.put("notify_url", weChatProperties.getNotifyUrl());
-
+        //订单金额
         JSONObject amount = new JSONObject();
-        amount.put("total", total.multiply(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_HALF_UP).intValue());
+        amount.put("total", total.multiply(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_HALF_UP).intValue());//单位为分，x100后四舍五入
         amount.put("currency", "CNY");
 
         jsonObject.put("amount", amount);
@@ -161,18 +161,18 @@ public class WeChatPayUtil {
      * @param total       金额，单位 元
      * @param description 商品描述
      * @param openid      微信用户的openid
-     * @return
      */
     public JSONObject pay(String orderNum, BigDecimal total, String description, String openid) throws Exception {
         //统一下单，生成预支付交易单
         String bodyAsString = jsapi(orderNum, total, description, openid);
-        //解析返回结果
+        //解析返回结果：预支付交易标识
         JSONObject jsonObject = JSON.parseObject(bodyAsString);
         System.out.println(jsonObject);
 
         String prepayId = jsonObject.getString("prepay_id");
+        //将组合数据再次签名
         if (prepayId != null) {
-            String timeStamp = String.valueOf(System.currentTimeMillis() / 1000);
+            String timeStamp = String.valueOf(System.currentTimeMillis() / 1000);//时间戳
             String nonceStr = RandomStringUtils.randomNumeric(32);
             ArrayList<Object> list = new ArrayList<>();
             list.add(weChatProperties.getAppid());
@@ -188,6 +188,7 @@ public class WeChatPayUtil {
             byte[] message = signMessage.getBytes();
 
             Signature signature = Signature.getInstance("SHA256withRSA");
+            //没有pem文件，仅实现逻辑
             signature.initSign(PemUtil.loadPrivateKey(new FileInputStream(new File(weChatProperties.getPrivateKeyFilePath()))));
             signature.update(message);
             String packageSign = Base64.getEncoder().encodeToString(signature.sign());
@@ -202,7 +203,7 @@ public class WeChatPayUtil {
 
             return jo;
         }
-        return jsonObject;
+        return jsonObject;//预支付交易标识为空，返回错误信息
     }
 
     /**

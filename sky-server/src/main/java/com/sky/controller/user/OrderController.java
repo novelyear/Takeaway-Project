@@ -35,14 +35,12 @@ public class OrderController {
 
     /**
      * 订单支付
-     *
-     * @param ordersPaymentDTO
-     * @return
+     * @param ordersPaymentDTO 订单号+付款方式
      */
-    @PutMapping("/payment")
+    @PutMapping("/payment")//step2, 小程序下单/payment
     @ApiOperation("订单支付")
     public Result<OrderPaymentVO> payment(@RequestBody OrdersPaymentDTO ordersPaymentDTO) throws Exception {
-        log.info("用户{}已支付", BaseContext.getCurrentId());
+        log.info("用户{}正在支付", BaseContext.getCurrentId());
         OrderPaymentVO orderPaymentVO = orderService.payment(ordersPaymentDTO);
         log.info("生成预支付交易单：{}", orderPaymentVO);
         return Result.success(orderPaymentVO);

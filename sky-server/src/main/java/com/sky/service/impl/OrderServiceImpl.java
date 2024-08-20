@@ -84,6 +84,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * 订单支付
+     * @param ordersPaymentDTO 订单号+付款方式
      */
     public OrderPaymentVO payment(OrdersPaymentDTO ordersPaymentDTO) throws Exception {
         // 当前登录用户id
@@ -94,7 +95,7 @@ public class OrderServiceImpl implements OrderService {
         JSONObject jsonObject = weChatPayUtil.pay(
                 ordersPaymentDTO.getOrderNumber(), //商户订单号
                 new BigDecimal(0.01), //支付金额，单位 元
-                "苍穹外卖订单", //商品描述
+                "外卖订单", //商品描述
                 user.getOpenid() //微信用户的openid
         );
 
