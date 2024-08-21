@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -202,21 +203,32 @@ public class OrderServiceImpl implements OrderService {
      */
     @Override
     public void repetition(Long id) {
-        //查找之前的订单
-        Orders order = orderMapper.getById(id);
-        if(order == null){
-            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
-        }
-        //清空用户购物车
-        shoppingCartMapper.clean(BaseContext.getCurrentId());
-        //更新订单信息
-        order.setOrderTime(LocalDateTime.now());
-        order.setStatus(Orders.UN_PAID);
-        order.setId(null);
-        //为用户新增一个同样的订单
-        orderMapper.insert(order);
+        // 查询当前用户id
+        Long userId = BaseContext.getCurrentId();
+
+        // 根据订单id查询当前订单详情
+        List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderId(id);
+
+        // 将订单详情对象转换为购物车对象
+        //流式处理值得学习
+        List<ShoppingCart> shoppingCartList = orderDetailList.stream().map(x -> {
+            ShoppingCart shoppingCart = new ShoppingCart();
+
+            // 将原订单详情里面的菜品信息重新复制到购物车对象中
+            BeanUtils.copyProperties(x, shoppingCart, "id");
+            shoppingCart.setUserId(userId);
+            shoppingCart.setCreateTime(LocalDateTime.now());
+
+            return shoppingCart;
+        }).collect(Collectors.toList());
+
+        // 将购物车对象批量添加到数据库
+        shoppingCartMapper.insertBatch(shoppingCartList);
     }
 
+    /**
+     * 订单条件搜索
+     */
     @Override
     public PageResult conditionSearch(OrdersPageQueryDTO ordersPageQueryDTO) {
         PageHelper.startPage(ordersPageQueryDTO.getPage(), ordersPageQueryDTO.getPageSize());
@@ -227,6 +239,8 @@ public class OrderServiceImpl implements OrderService {
             StringBuilder orderDishs = new StringBuilder();
             for(OrderDetail orderDetail : details){
                 orderDishs.append(orderDetail.getName());
+                orderDishs.append("*");
+                orderDishs.append(orderDetail.getNumber());
                 orderDishs.append(",");
             }
             OrderVO orderVO = new OrderVO();
