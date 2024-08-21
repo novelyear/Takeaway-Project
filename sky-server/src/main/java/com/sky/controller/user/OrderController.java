@@ -46,7 +46,6 @@ public class OrderController {
         log.info("用户{}正在支付", BaseContext.getCurrentId());
         OrderPaymentVO orderPaymentVO = orderService.payment(ordersPaymentDTO);
         log.info("生成预支付交易单：{}", orderPaymentVO);
-        log.info("支付成功！");
         return Result.success(orderPaymentVO);
     }
     /**

@@ -1,14 +1,18 @@
 package com.sky.utils;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.sky.properties.WeChatProperties;
 import com.wechat.pay.contrib.apache.httpclient.WechatPayHttpClientBuilder;
 import com.wechat.pay.contrib.apache.httpclient.util.PemUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +23,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.security.PrivateKey;
+import java.security.Signature;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 
 /**
@@ -75,23 +82,22 @@ public class WeChatPayUtil {
      * @return
      */
     private String post(String url, String body) throws Exception {
-//        CloseableHttpClient httpClient = getClient();
-//
-//        HttpPost httpPost = new HttpPost(url);
-//        httpPost.addHeader(HttpHeaders.ACCEPT, ContentType.APPLICATION_JSON.toString());
-//        httpPost.addHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.toString());
-//        httpPost.addHeader("Wechatpay-Serial", weChatProperties.getMchSerialNo());
-//        httpPost.setEntity(new StringEntity(body, "UTF-8"));
-//
-//        CloseableHttpResponse response = httpClient.execute(httpPost);
-//        try {
-//            String bodyAsString = EntityUtils.toString(response.getEntity());
-//            return bodyAsString;
-//        } finally {
-//            httpClient.close();
-//            response.close();
-//        }
-        return "wx26112221580621e9b071c00d9e093b0000";
+        CloseableHttpClient httpClient = getClient();
+
+        HttpPost httpPost = new HttpPost(url);
+        httpPost.addHeader(HttpHeaders.ACCEPT, ContentType.APPLICATION_JSON.toString());
+        httpPost.addHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.toString());
+        httpPost.addHeader("Wechatpay-Serial", weChatProperties.getMchSerialNo());
+        httpPost.setEntity(new StringEntity(body, "UTF-8"));
+
+        CloseableHttpResponse response = httpClient.execute(httpPost);
+        try {
+            String bodyAsString = EntityUtils.toString(response.getEntity());
+            return bodyAsString;
+        } finally {
+            httpClient.close();
+            response.close();
+        }
     }
 
     /**
@@ -129,26 +135,25 @@ public class WeChatPayUtil {
     private String jsapi(String orderNum, BigDecimal total, String description, String openid) throws Exception {
         JSONObject jsonObject = new JSONObject();
         //加入配置信息
-//        jsonObject.put("appid", weChatProperties.getAppid());
-//        jsonObject.put("mchid", weChatProperties.getMchid());
-//        jsonObject.put("description", description);
-//        jsonObject.put("out_trade_no", orderNum);
-//        jsonObject.put("notify_url", weChatProperties.getNotifyUrl());
-//        //订单金额
-//        JSONObject amount = new JSONObject();
-//        amount.put("total", total.multiply(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_HALF_UP).intValue());//单位为分，x100后四舍五入
-//        amount.put("currency", "CNY");
-//
-//        jsonObject.put("amount", amount);
-//
-//        JSONObject payer = new JSONObject();
-//        payer.put("openid", openid);
-//
-//        jsonObject.put("payer", payer);
-//
-//        String body = jsonObject.toJSONString();
-//        return post(JSAPI, body);
-        return post("", "");
+        jsonObject.put("appid", weChatProperties.getAppid());
+        jsonObject.put("mchid", weChatProperties.getMchid());
+        jsonObject.put("description", description);
+        jsonObject.put("out_trade_no", orderNum);
+        jsonObject.put("notify_url", weChatProperties.getNotifyUrl());
+        //订单金额
+        JSONObject amount = new JSONObject();
+        amount.put("total", total.multiply(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_HALF_UP).intValue());//单位为分，x100后四舍五入
+        amount.put("currency", "CNY");
+
+        jsonObject.put("amount", amount);
+
+        JSONObject payer = new JSONObject();
+        payer.put("openid", openid);
+
+        jsonObject.put("payer", payer);
+
+        String body = jsonObject.toJSONString();
+        return post(JSAPI, body);
     }
 
     /**
@@ -163,49 +168,44 @@ public class WeChatPayUtil {
         log.info("统一下单，生成预支付交易单");
         String bodyAsString = jsapi(orderNum, total, description, openid);
         log.info("解析返回结果：预支付交易标识");
-//        JSONObject jsonObject = JSON.parseObject(bodyAsString);
-//        log.info(String.valueOf(jsonObject));
+        JSONObject jsonObject = JSON.parseObject(bodyAsString);
+        log.info(String.valueOf(jsonObject));
 
-//        String prepayId = jsonObject.getString("prepay_id");
+        String prepayId = jsonObject.getString("prepay_id");
         //将组合数据再次签名
-//        if (prepayId != null) {
-//            String timeStamp = String.valueOf(System.currentTimeMillis() / 1000);//时间戳
-//            String nonceStr = RandomStringUtils.randomNumeric(32);
-//            ArrayList<Object> list = new ArrayList<>();
-//            list.add(weChatProperties.getAppid());
-//            list.add(timeStamp);
-//            list.add(nonceStr);
-//            list.add("prepay_id=" + prepayId);
-//            //二次签名，调起支付需要重新签名
-//            StringBuilder stringBuilder = new StringBuilder();
-//            for (Object o : list) {
-//                stringBuilder.append(o).append("\n");
-//            }
-//            String signMessage = stringBuilder.toString();
-//            byte[] message = signMessage.getBytes();
-//
-//            Signature signature = Signature.getInstance("SHA256withRSA");
-//            //没有pem文件，仅实现逻辑
-//            signature.initSign(PemUtil.loadPrivateKey(new FileInputStream(new File(weChatProperties.getPrivateKeyFilePath()))));
-//            signature.update(message);
-//            String packageSign = Base64.getEncoder().encodeToString(signature.sign());
+        if (prepayId != null) {
+            String timeStamp = String.valueOf(System.currentTimeMillis() / 1000);//时间戳
+            String nonceStr = RandomStringUtils.randomNumeric(32);
+            ArrayList<Object> list = new ArrayList<>();
+            list.add(weChatProperties.getAppid());
+            list.add(timeStamp);
+            list.add(nonceStr);
+            list.add("prepay_id=" + prepayId);
+            //二次签名，调起支付需要重新签名
+            StringBuilder stringBuilder = new StringBuilder();
+            for (Object o : list) {
+                stringBuilder.append(o).append("\n");
+            }
+            String signMessage = stringBuilder.toString();
+            byte[] message = signMessage.getBytes();
+
+            Signature signature = Signature.getInstance("SHA256withRSA");
+            //没有pem文件，仅实现逻辑
+            signature.initSign(PemUtil.loadPrivateKey(new FileInputStream(new File(weChatProperties.getPrivateKeyFilePath()))));
+            signature.update(message);
+            String packageSign = Base64.getEncoder().encodeToString(signature.sign());
 
             //构造数据给微信小程序，用于调起微信支付
             JSONObject jo = new JSONObject();
-//            jo.put("timeStamp", timeStamp);
-//            jo.put("nonceStr", nonceStr);
-//            jo.put("package", "prepay_id=" + prepayId);
-//            jo.put("signType", "RSA");
-//            jo.put("paySign", packageSign);
-
-            jo.put("timeStamp", "1414561699");
-            jo.put("nonceStr", "5K8264ILTKCH16CQ2502SI8ZNMTM67VS");
-            jo.put("package", "prepay_id=" + "wx201410272009395522657a690389285100");
+            jo.put("timeStamp", timeStamp);
+            jo.put("nonceStr", nonceStr);
+            jo.put("package", "prepay_id=" + prepayId);
             jo.put("signType", "RSA");
-            jo.put("paySign", "oR9d8PuhnIc+YZ8cBHFCwfgpaK9gd7vaRvkYD7rthRAZ\\/X+QBhcCYL21N7cHCTUxbQ+EAt6Uy+lwSN22f5YZvI45MLko8Pfso0jm46v5hqcVwrk6uddkGuT+Cdvu4WBqDzaDjnNa5UK3GfE1Wfl2gHxIIY5lLdUgWFts17D4WuolLLkiFZV+JSHMvH7eaLdT9N5GBovBwu5yYKUR7skR8Fu+LozcSqQixnlEZUfyE55feLOQTUYzLmR9pNtPbPsu6WVhbNHMS3Ss2+AehHvz+n64GDmXxbX++IOBvm2olHu3PsOUGRwhudhVf7UcGcunXt8cqNjKNqZLhLw4jq\\/xDg==");
+            jo.put("paySign", packageSign);
+
             return jo;
-//        }
-//        return jsonObject;//预支付交易标识为空，返回错误信息
+        }
+        return jsonObject;//预支付交易标识为空，返回错误信息
     }
 
     /**
