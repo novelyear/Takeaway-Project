@@ -6,6 +6,9 @@ import com.sky.entity.Orders;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Mapper
 public interface OrderMapper {
     /**
@@ -44,4 +47,10 @@ public interface OrderMapper {
     Integer getDeliveryInProgress();
     @Select("select count(*) from orders where status = 2")
     Integer getToBeConfirmed();
+
+    /**
+     * 处理超时订单
+     */
+    @Select("select * from orders where status = #{status} and order_time < #{orderTime}")
+    List<Orders> getByStatusOrderTimeLT(Integer status, LocalDateTime orderTime);
 }
