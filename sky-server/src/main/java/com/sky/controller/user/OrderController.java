@@ -2,8 +2,10 @@ package com.sky.controller.user;
 
 
 import com.sky.context.BaseContext;
+import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersSubmitDTO;
+import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.OrderService;
 import com.sky.vo.OrderPaymentVO;
@@ -43,6 +45,18 @@ public class OrderController {
         log.info("用户{}正在支付", BaseContext.getCurrentId());
         OrderPaymentVO orderPaymentVO = orderService.payment(ordersPaymentDTO);
         log.info("生成预支付交易单：{}", orderPaymentVO);
+        log.info("支付成功！");
         return Result.success(orderPaymentVO);
+    }
+    /**
+     * 历史订单查询
+     */
+    @GetMapping("/historyOrders")
+    @ApiOperation("历史订单查询")
+    public Result<PageResult> historyOrdersList(OrdersPageQueryDTO ordersPageQueryDTO) throws Exception {
+        log.info("历史订单查询{}", ordersPageQueryDTO);
+        PageResult pageResult = orderService.pageQuery(ordersPageQueryDTO);
+        log.info("查询到{}", pageResult);
+        return Result.success(pageResult);
     }
 }
