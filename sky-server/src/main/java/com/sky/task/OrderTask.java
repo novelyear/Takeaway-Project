@@ -38,7 +38,7 @@ public class OrderTask {
     /**
      * 自动处理派送中订单
      */
-    @Scheduled(cron = "0 0 1 * * ? ")
+    @Scheduled(cron = "0 20 * * * ? ")
     public void processDeliveryOrder() {
         log.info("定时处理派送中订单");
 
