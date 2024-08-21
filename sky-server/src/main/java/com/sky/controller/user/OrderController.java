@@ -10,13 +10,14 @@ import com.sky.result.Result;
 import com.sky.service.OrderService;
 import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderSubmitVO;
+import com.sky.vo.OrderVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-@RestController
+@RestController("userOrderController")
 @RequestMapping("/user/order")
 @Api(tags = "用户下单相关接口")
 @Slf4j
@@ -58,5 +59,36 @@ public class OrderController {
         PageResult pageResult = orderService.pageQuery(ordersPageQueryDTO);
         log.info("查询到{}", pageResult);
         return Result.success(pageResult);
+    }
+    /**
+     * 查询订单详情
+     */
+    @GetMapping("/orderDetail/{id}")
+    @ApiOperation("查询订单详情")
+    public Result<OrderVO> orderDetail(@PathVariable Long id) throws Exception {
+        log.info("正在查询订单 {} 的详情", id);
+        OrderVO orderVO = orderService.getDetail(id);
+        return Result.success(orderVO);
+    }
+    /**
+     * 取消订单
+     */
+    @PutMapping("/cancel/{id}")
+    @ApiOperation("取消订单")
+    public Result<String> canelOrder(@PathVariable Long id) throws Exception {
+        log.info("订单 {} 被用户 {} 取消", id, BaseContext.getCurrentId());
+        orderService.userCancelById(id);
+        return Result.success();
+    }
+    /**
+     * 再来一单
+     */
+    @PostMapping("/repetition/{id}")
+    @ApiOperation("再来一单")
+    public Result<String> repetition(@PathVariable Long id) throws Exception {
+        Long userId = BaseContext.getCurrentId();
+        log.info("用户 {} 再来一单 {} ", userId, id);
+        orderService.repetition(id);
+        return Result.success();
     }
 }

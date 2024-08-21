@@ -5,9 +5,7 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
-import com.sky.dto.OrdersPageQueryDTO;
-import com.sky.dto.OrdersPaymentDTO;
-import com.sky.dto.OrdersSubmitDTO;
+import com.sky.dto.*;
 import com.sky.entity.*;
 import com.sky.exception.AddressBookBusinessException;
 import com.sky.exception.OrderBusinessException;
@@ -17,6 +15,7 @@ import com.sky.result.PageResult;
 import com.sky.service.OrderService;
 import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.OrderPaymentVO;
+import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
 import org.springframework.beans.BeanUtils;
@@ -157,5 +156,140 @@ public class OrderServiceImpl implements OrderService {
             orderVOList.add(orderVO);
         }
         return new PageResult(orders.getTotal(), orderVOList);
+    }
+
+    /**
+     * 查询订单详情
+     * @param id 订单id
+     */
+    @Override
+    public OrderVO getDetail(Long id) {
+        OrderVO orderVO = new OrderVO();
+        Orders order = orderMapper.getById(id);
+        BeanUtils.copyProperties(order, orderVO);
+        List<OrderDetail> orderDetails = orderDetailMapper.getByOrderId(order.getId());
+        orderVO.setOrderDetailList(orderDetails);
+        return orderVO;
+    }
+
+    /**
+     * 用户取消订单
+     */
+    @Override
+    public void userCancelById(Long id) {
+        //检查订单是否存在
+        Orders order = orderMapper.getById(id);
+        if(order == null){
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        //订单状态 1待付款 2待接单 3已接单 4派送中 5已完成 6已取消
+        if (order.getStatus() > 2) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        // TODO 退款逻辑
+        if(order.getStatus() == Orders.TO_BE_CONFIRMED){
+            order.setPayStatus(Orders.REFUND);
+        }
+        //修改订单状态
+        order.setStatus(Orders.CANCELLED);
+        order.setCancelReason("用户取消");
+        order.setCancelTime(LocalDateTime.now());
+        orderMapper.update(order);
+    }
+
+    /**
+     * 用户再来一单
+     */
+    @Override
+    public void repetition(Long id) {
+        //查找之前的订单
+        Orders order = orderMapper.getById(id);
+        if(order == null){
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+        //清空用户购物车
+        shoppingCartMapper.clean(BaseContext.getCurrentId());
+        //更新订单信息
+        order.setOrderTime(LocalDateTime.now());
+        order.setStatus(Orders.UN_PAID);
+        order.setId(null);
+        //为用户新增一个同样的订单
+        orderMapper.insert(order);
+    }
+
+    @Override
+    public PageResult conditionSearch(OrdersPageQueryDTO ordersPageQueryDTO) {
+        PageHelper.startPage(ordersPageQueryDTO.getPage(), ordersPageQueryDTO.getPageSize());
+        List<Orders> orders = orderMapper.query(ordersPageQueryDTO);
+        Page<OrderVO> orderVOs = new Page<>();
+        for(Orders order : orders){
+            List<OrderDetail> details = orderDetailMapper.getByOrderId(order.getId());
+            StringBuilder orderDishs = new StringBuilder();
+            for(OrderDetail orderDetail : details){
+                orderDishs.append(orderDetail.getName());
+                orderDishs.append(",");
+            }
+            OrderVO orderVO = new OrderVO();
+            BeanUtils.copyProperties(order, orderVO);
+            orderVO.setOrderDishes(orderDishs.toString());
+            orderVOs.add(orderVO);
+        }
+        return new PageResult(orderVOs.getTotal(), orderVOs.getResult());
+    }
+
+    @Override
+    public OrderStatisticsVO getStatistics() {
+        OrderStatisticsVO orderStatisticsVO = new OrderStatisticsVO();
+        orderStatisticsVO.setConfirmed(orderMapper.getConfirmed());
+        orderStatisticsVO.setDeliveryInProgress(orderMapper.getDeliveryInProgress());
+        orderStatisticsVO.setToBeConfirmed(orderMapper.getToBeConfirmed());
+        return orderStatisticsVO;
+    }
+
+    @Override
+    public void confirmOrder(Long id) {
+        //修改订单状态、填入预计送达时间
+        Orders order = orderMapper.getById(id);
+        order.setOrderTime(LocalDateTime.now());
+        order.setStatus(Orders.CONFIRMED);
+        orderMapper.update(order);
+    }
+
+    @Override
+    public void rejection(OrdersRejectionDTO ordersRejectionDTO) {
+        Orders order = orderMapper.getById(ordersRejectionDTO.getId());
+        order.setRejectionReason(ordersRejectionDTO.getRejectionReason());
+        order.setStatus(Orders.CANCELLED);
+        order.setPayStatus(Orders.REFUND);
+        order.setCancelTime(LocalDateTime.now());
+        orderMapper.update(order);
+        // TODO 退款逻辑
+    }
+
+    @Override
+    public void cancel(OrdersCancelDTO ordersCancelDTO) {
+        Orders order = orderMapper.getById(ordersCancelDTO.getId());
+        order.setCancelReason(ordersCancelDTO.getCancelReason());
+        order.setStatus(Orders.CANCELLED);
+        order.setPayStatus(Orders.REFUND);
+        order.setCancelTime(LocalDateTime.now());
+        orderMapper.update(order);
+        // TODO 退款逻辑
+    }
+
+    @Override
+    public void deliveryOrder(Long id) {
+        Orders order = orderMapper.getById(id);
+        order.setStatus(Orders.DELIVERY_IN_PROGRESS);
+        //预计送达时间 无
+        orderMapper.update(order);
+    }
+
+    @Override
+    public void completeOrder(Long id) {
+        Orders order = orderMapper.getById(id);
+        order.setStatus(Orders.COMPLETED);
+        order.setDeliveryTime(LocalDateTime.now());
+        orderMapper.update(order);
     }
 }

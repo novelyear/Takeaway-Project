@@ -5,6 +5,7 @@ import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.entity.Orders;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 @Mapper
 public interface OrderMapper {
@@ -24,5 +25,33 @@ public interface OrderMapper {
      */
     void update(Orders orders);
 
+    /**
+     * 分页查询订单
+     */
     Page<Orders> query(OrdersPageQueryDTO ordersPageQueryDTO);
+
+    /**
+     * 根据id查询订单
+     */
+    @Select("select * from orders where id = #{id}")
+    Orders getById(Long id);
+
+    /**
+     * 查询各个状态下订单数量
+     */
+    @Select("select count(*) from orders where status = 3")
+    Integer getConfirmed();
+    @Select("select count(*) from orders where status = 4")
+    Integer getDeliveryInProgress();
+    @Select("select count(*) from orders where status = 2")
+    Integer getToBeConfirmed();
+
+    /**
+     * 根据id修改订单状态
+     */
+    @Update("update orders set status = 3 where id = #{id}")
+    void confirm(Long id);
+    @Update("update orders set status = 4 where id = #{id};")
+    void delivery(Long id);
+
 }
