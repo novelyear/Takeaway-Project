@@ -54,7 +54,7 @@ public class OrderController {
      */
     @GetMapping("/historyOrders")
     @ApiOperation("历史订单查询")
-    public Result<PageResult> historyOrdersList(OrdersPageQueryDTO ordersPageQueryDTO) throws Exception {
+    public Result<PageResult> historyOrdersList(OrdersPageQueryDTO ordersPageQueryDTO){
         log.info("历史订单查询{}", ordersPageQueryDTO);
         PageResult pageResult = orderService.pageQuery(ordersPageQueryDTO);
         log.info("查询到{}", pageResult);
@@ -65,7 +65,7 @@ public class OrderController {
      */
     @GetMapping("/orderDetail/{id}")
     @ApiOperation("查询订单详情")
-    public Result<OrderVO> orderDetail(@PathVariable Long id) throws Exception {
+    public Result<OrderVO> orderDetail(@PathVariable Long id){
         log.info("正在查询订单 {} 的详情", id);
         OrderVO orderVO = orderService.getDetail(id);
         return Result.success(orderVO);
@@ -75,7 +75,7 @@ public class OrderController {
      */
     @PutMapping("/cancel/{id}")
     @ApiOperation("取消订单")
-    public Result<String> canelOrder(@PathVariable Long id) throws Exception {
+    public Result<String> canelOrder(@PathVariable Long id){
         log.info("订单 {} 被用户 {} 取消", id, BaseContext.getCurrentId());
         orderService.userCancelById(id);
         return Result.success();
@@ -85,7 +85,7 @@ public class OrderController {
      */
     @PostMapping("/repetition/{id}")
     @ApiOperation("再来一单")
-    public Result<String> repetition(@PathVariable Long id) throws Exception {
+    public Result<String> repetition(@PathVariable Long id) {
         Long userId = BaseContext.getCurrentId();
         log.info("用户 {} 再来一单 {} ", userId, id);
         orderService.repetition(id);

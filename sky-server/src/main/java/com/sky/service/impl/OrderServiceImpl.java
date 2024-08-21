@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -99,7 +100,7 @@ public class OrderServiceImpl implements OrderService {
         //调用微信支付接口，生成预支付交易单
         JSONObject jsonObject = weChatPayUtil.pay(
                 ordersPaymentDTO.getOrderNumber(), //商户订单号
-                new BigDecimal(0.01), //支付金额，单位 元
+                new BigDecimal("0.01"), //支付金额，单位 元
                 "外卖订单", //商品描述
                 user.getOpenid() //微信用户的openid
         );
@@ -188,7 +189,7 @@ public class OrderServiceImpl implements OrderService {
             throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
         }
         // TODO 退款逻辑
-        if(order.getStatus() == Orders.TO_BE_CONFIRMED){
+        if(order.getStatus().equals(Orders.TO_BE_CONFIRMED)){
             order.setPayStatus(Orders.REFUND);
         }
         //修改订单状态
@@ -251,6 +252,9 @@ public class OrderServiceImpl implements OrderService {
         return new PageResult(orderVOs.getTotal(), orderVOs.getResult());
     }
 
+    /**
+     * 查询各状态订单数量
+     */
     @Override
     public OrderStatisticsVO getStatistics() {
         OrderStatisticsVO orderStatisticsVO = new OrderStatisticsVO();
@@ -260,6 +264,9 @@ public class OrderServiceImpl implements OrderService {
         return orderStatisticsVO;
     }
 
+    /**
+     * 接单
+     */
     @Override
     public void confirmOrder(Long id) {
         //修改订单状态、填入预计送达时间
@@ -269,31 +276,46 @@ public class OrderServiceImpl implements OrderService {
         orderMapper.update(order);
     }
 
+    /**
+     * 拒单
+     */
     @Override
     public void rejection(OrdersRejectionDTO ordersRejectionDTO) {
         Orders order = orderMapper.getById(ordersRejectionDTO.getId());
+        if (order == null || !order.getStatus().equals(Orders.TO_BE_CONFIRMED)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
         order.setRejectionReason(ordersRejectionDTO.getRejectionReason());
         order.setStatus(Orders.CANCELLED);
-        order.setPayStatus(Orders.REFUND);
+        if(Objects.equals(order.getPayStatus(), Orders.PAID)) order.setPayStatus(Orders.REFUND);
+        // TODO 退款逻辑
         order.setCancelTime(LocalDateTime.now());
         orderMapper.update(order);
-        // TODO 退款逻辑
     }
 
+    /**
+     * 商家取消订单
+     */
     @Override
     public void cancel(OrdersCancelDTO ordersCancelDTO) {
         Orders order = orderMapper.getById(ordersCancelDTO.getId());
         order.setCancelReason(ordersCancelDTO.getCancelReason());
         order.setStatus(Orders.CANCELLED);
-        order.setPayStatus(Orders.REFUND);
+        if(order.getPayStatus().equals(Orders.PAID)) order.setPayStatus(Orders.REFUND);
+        // TODO 退款逻辑
         order.setCancelTime(LocalDateTime.now());
         orderMapper.update(order);
-        // TODO 退款逻辑
     }
 
+    /**
+     * 派送订单
+     */
     @Override
     public void deliveryOrder(Long id) {
         Orders order = orderMapper.getById(id);
+        if (order == null || !order.getStatus().equals(Orders.CONFIRMED)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
         order.setStatus(Orders.DELIVERY_IN_PROGRESS);
         //预计送达时间 无
         orderMapper.update(order);
@@ -302,6 +324,9 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public void completeOrder(Long id) {
         Orders order = orderMapper.getById(id);
+        if (order == null || !order.getStatus().equals(Orders.DELIVERY_IN_PROGRESS)) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
         order.setStatus(Orders.COMPLETED);
         order.setDeliveryTime(LocalDateTime.now());
         orderMapper.update(order);
