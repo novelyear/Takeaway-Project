@@ -32,7 +32,7 @@ public interface OrderService {
 
     OrderStatisticsVO getStatistics();
 
-    void confirmOrder(Long id);
+    void confirmOrder(OrdersConfirmDTO id);
 
     void rejection(OrdersRejectionDTO ordersRejectionDTO);
 
@@ -41,4 +41,6 @@ public interface OrderService {
     void deliveryOrder(Long id);
 
     void completeOrder(Long id);
+
+    void reminder(Long orderId);
 }

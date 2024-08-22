@@ -1,8 +1,7 @@
 package com.sky.websocket;
 
 import org.springframework.stereotype.Component;
-import javax.websocket.OnClose;
-import javax.websocket.OnMessage;
+
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.PathParam;
@@ -31,30 +30,7 @@ public class WebSocketServer {
     }
 
     /**
-     * 收到客户端消息后调用的方法
-     *
-     * @param message 客户端发送过来的消息
-     */
-    @OnMessage
-    public void onMessage(String message, @PathParam("sid") String sid) {
-        System.out.println("收到来自客户端：" + sid + "的信息:" + message);
-    }
-
-    /**
-     * 连接关闭调用的方法
-     *
-     * @param sid
-     */
-    @OnClose
-    public void onClose(@PathParam("sid") String sid) {
-        System.out.println("连接断开:" + sid);
-        sessionMap.remove(sid);
-    }
-
-    /**
      * 群发
-     *
-     * @param message
      */
     public void sendToAllClient(String message) {
         Collection<Session> sessions = sessionMap.values();

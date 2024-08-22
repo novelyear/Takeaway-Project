@@ -265,9 +265,9 @@ public class OrderServiceImpl implements OrderService {
      * 接单
      */
     @Override
-    public void confirmOrder(Long id) {
+    public void confirmOrder(OrdersConfirmDTO ordersConfirmDTO) {
         //修改订单状态、填入预计送达时间
-        Orders order = orderMapper.getById(id);
+        Orders order = orderMapper.getById(ordersConfirmDTO.getId());
         order.setOrderTime(LocalDateTime.now());
         order.setStatus(Orders.CONFIRMED);
         orderMapper.update(order);
@@ -327,5 +327,17 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(Orders.COMPLETED);
         order.setDeliveryTime(LocalDateTime.now());
         orderMapper.update(order);
+    }
+
+    @Override
+    public void reminder(Long orderId) {
+        //通过websocket向客户端推送消息
+        Map map = new HashMap();
+        map.put("type", 1);
+        map.put("orderId", orderId);
+        Orders order = orderMapper.getById(orderId);
+        map.put("content", "订单号" + order.getNumber());
+        String json = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
     }
 }
