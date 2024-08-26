@@ -82,4 +82,13 @@
         order by number desc
         limit 0,10
     </select>
+
+    <select id="countByMap" resultType="integer">
+        select count(*) from orders
+        <where>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+        </where>
+    </select>
 </mapper>

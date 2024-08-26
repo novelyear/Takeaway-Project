@@ -3,6 +3,7 @@ package com.sky.service.impl;
 import com.sky.dto.GoodsSalesDTO;
 import com.sky.entity.Orders;
 import com.sky.mapper.OrderMapper;
+import com.sky.mapper.UserMapper;
 import com.sky.service.ReportService;
 import com.sky.vo.OrderReportVO;
 import com.sky.vo.SalesTop10ReportVO;
@@ -28,7 +29,8 @@ public class ReportServiceImpl implements ReportService {
 
     @Autowired
     private OrderMapper orderMapper;
-
+    @Autowired
+    private UserMapper userMapper;
 
 
     /**
@@ -54,7 +56,9 @@ public class ReportServiceImpl implements ReportService {
         );
         return turnoverReportVO;
     }
-
+    /**
+     * 查询用户情况
+     */
     @Override
     public UserReportVO getUserStatistics(LocalDate begin, LocalDate end) {
         UserReportVO userReportVO = new UserReportVO();
@@ -67,7 +71,7 @@ public class ReportServiceImpl implements ReportService {
         String newUser = Stream.iterate(begin, date -> date.plusDays(1))
                                 .limit(end.toEpochDay() - begin.toEpochDay() + 1)
                                 .map(date -> {
-                                    Integer newUsers = orderMapper.getNewUserByDate(date);
+                                    Integer newUsers = userMapper.getNewUserByDate(date);
                                     return newUsers == null ? "0" : newUsers.toString();
                                 })
                                 .collect(Collectors.joining(","));

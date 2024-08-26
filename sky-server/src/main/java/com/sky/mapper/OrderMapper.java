@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface OrderMapper {
@@ -50,6 +51,7 @@ public interface OrderMapper {
     Integer getDeliveryInProgress();
     @Select("select count(*) from orders where status = 2")
     Integer getToBeConfirmed();
+    Integer countByMap(Map map);
 
     /**
      * 处理超时订单
@@ -58,8 +60,6 @@ public interface OrderMapper {
     List<Orders> getByStatusOrderTimeLT(Integer status, LocalDateTime orderTime);
     @Select("select sum(orders.amount) from orders where date(order_time) = #{date} and status = 5")
     BigDecimal getRevenueByDate(LocalDate date);
-    @Select("select count(*) from user where date (create_time) = #{date};")
-    Integer getNewUserByDate(LocalDate date);
 
     /**
      * 查询单日所有订单
