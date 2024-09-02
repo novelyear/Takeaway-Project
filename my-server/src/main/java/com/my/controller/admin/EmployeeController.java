@@ -1,9 +1,11 @@
 package com.my.controller.admin;
 
 import com.my.constant.JwtClaimsConstant;
+import com.my.context.BaseContext;
 import com.my.dto.EmployeeDTO;
 import com.my.dto.EmployeeLoginDTO;
 import com.my.dto.EmployeePageQueryDTO;
+import com.my.dto.PasswordChangeDTO;
 import com.my.entity.Employee;
 import com.my.properties.JwtProperties;
 import com.my.result.PageResult;
@@ -88,12 +90,11 @@ public class EmployeeController {
     }
     /**
     * 分页查询员工
-    *
-    *
     */
-    @PostMapping("/page")
+    @GetMapping("/page")
     @ApiOperation("分页查询员工")
     public Result<PageResult> list(EmployeePageQueryDTO employeePageQueryDTO) {
+        log.info("分页查询员工{}", employeePageQueryDTO);
         PageResult pageResult = employeeService.list(employeePageQueryDTO);
         return Result.success(pageResult);
     }
@@ -124,16 +125,20 @@ public class EmployeeController {
     }
     /**
     *修改员工密码
-     * @param id
-     * @param newPassword
-     * @param oldPassword
     */
     @PutMapping("/editPassword")
     @ApiOperation("修改员工密码")
-    public Result editPassword(@RequestBody Long id,
-                               @RequestParam String newPassword,
-                               @RequestParam String oldPassword) {
-        log.info("employee{}'s password updated", id);
+    public Result editPassword(@RequestBody PasswordChangeDTO passwordChangeDTO) {
+        log.info("员工{}修改密码", BaseContext.getCurrentId());
+        Long id;
+        if(passwordChangeDTO.getId() != null) {
+            id = passwordChangeDTO.getId();
+        }
+        else {
+            id = BaseContext.getCurrentId();
+        }
+        String newPassword = passwordChangeDTO.getNewPassword();
+        String oldPassword = passwordChangeDTO.getOldPassword();
         employeeService.editPassword(id, newPassword, oldPassword);
         return Result.success();
     }

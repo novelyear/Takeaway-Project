@@ -7,7 +7,7 @@ import com.my.dto.OrdersPaymentDTO;
 import com.my.dto.OrdersSubmitDTO;
 import com.my.result.PageResult;
 import com.my.result.Result;
-import com.my.service.OrderService;
+import com.my.service.impl.OrderServiceImpl;
 import com.my.vo.OrderSubmitVO;
 import com.my.vo.OrderVO;
 import io.swagger.annotations.Api;
@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class OrderController {
 
     @Autowired
-    private OrderService orderService;
+    private OrderServiceImpl orderService;
     /**
      * 用户下单
      */
